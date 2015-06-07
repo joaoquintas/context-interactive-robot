@@ -1,0 +1,4 @@
+# ignore Python temporary files
+*.pyc
+*.pkl
+serverlog.log
