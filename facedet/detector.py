@@ -9,10 +9,10 @@ class Detector:
 
 class SkinDetector(Detector):
 	"""
-	Implements common color thresholding rules for the RGB, YCrCb and HSV color 
+	Implements common color thresholding rules for the RGB, YCrCb and HSV color
 	space. The values are taken from a paper, which I can't find right now, so
 	be careful with this detector.
-	
+
 	"""
 	def _R1(self,BGR):
 		# channels
@@ -22,7 +22,7 @@ class SkinDetector(Detector):
 		e1 = (R>95) & (G>40) & (B>20) & ((np.maximum(R,np.maximum(G,B)) - np.minimum(R, np.minimum(G,B)))>15) & (np.abs(R-G)>15) & (R>G) & (R>B)
 		e2 = (R>220) & (G>210) & (B>170) & (abs(R-G)<=15) & (R>B) & (G>B)
 		return (e1|e2)
-	
+
 	def _R2(self,YCrCb):
 		Y = YCrCb[:,:,0]
 		Cr = YCrCb[:,:,1]
@@ -33,13 +33,13 @@ class SkinDetector(Detector):
 		e4 = Cr <= (-1.15*Cb+301.75)
 		e5 = Cr <= (-2.2857*Cb+432.85)
 		return e1 & e2 & e3 & e4 & e5
-	
+
 	def _R3(self,HSV):
 		H = HSV[:,:,0]
 		S = HSV[:,:,1]
 		V = HSV[:,:,2]
 		return ((H<25) | (H>230))
-	
+
 	def detect(self, src):
 		if np.ndim(src) < 3:
 			return np.ones(src.shape, dtype=np.uint8)
@@ -95,7 +95,7 @@ class SkinFaceDetector(Detector):
 			face = src[y0:y1,x0:x1]
 			skinPixels = self.skinDetector.detect(face)
 			skinPercentage = float(np.sum(skinPixels)) / skinPixels.size
-			print skinPercentage
+			print (skinPercentage)
 			if skinPercentage > self.threshold:
 				rects.append(r)
 		return rects
@@ -110,13 +110,14 @@ if __name__ == "__main__":
 		outFileName = sys.argv[2]
 	if outFileName == inFileName:
 		outFileName = None
+
 	# detection begins here
-	img = np.array(cv2.imread(inFileName), dtype=np.uint8)
-	imgOut = img.copy()
+	img = cv2.imread(inFileName)
+	imgOut = img
 	# set up detectors
-	#detector = SkinFaceDetector(threshold=0.3, cascade_fn="/home/philipp/projects/opencv2/OpenCV-2.3.1/data/haarcascades/haarcascade_frontalface_alt2.xml")
-	detector = CascadedDetector(cascade_fn="/home/philipp/projects/opencv2/OpenCV-2.3.1/data/haarcascades/haarcascade_frontalface_alt2.xml")
-	eyesDetector = CascadedDetector(scaleFactor=1.1,minNeighbors=5, minSize=(20,20), cascade_fn="/home/philipp/projects/opencv2/OpenCV-2.3.1/data/haarcascades/haarcascade_eye.xml")
+	#detector = SkinFaceDetector(threshold=0.3, cascade_fn="/Users/Utilizador/opencv-3.0.0/data/haarcascades/haarcascade_frontalface_alt2.xml")
+	detector = CascadedDetector(cascade_fn="/Users/Utilizador/opencv-3.0.0/data/haarcascades/haarcascade_frontalface_alt2.xml")
+	eyesDetector = CascadedDetector(scaleFactor=1.1,minNeighbors=5, minSize=(20,20), cascade_fn="/Users/Utilizador/opencv-3.0.0/data/haarcascades/haarcascade_eye.xml")
 	# detection
 	for i,r in enumerate(detector.detect(img)):
 		x0,y0,x1,y1 = r
@@ -125,8 +126,10 @@ if __name__ == "__main__":
 		for j,r2 in enumerate(eyesDetector.detect(face)):
 			ex0,ey0,ex1,ey1 = r2
 			cv2.rectangle(imgOut, (x0+ex0,y0+ey0),(x0+ex1,y0+ey1),(0,255,0),1)
+
 	# display image or write to file
 	if outFileName is None:
 		cv2.imshow('faces', imgOut)
 		cv2.waitKey(0)
-		cv2.imwrite(outFileName, imgOut) 
+		# cv2.imwrite(outFileName, imgOut)
+

@@ -8,10 +8,10 @@ def read_image(filename):
         im = Image.open(os.path.join(filename))
         im = im.convert("L") # convert to greyscale
         imarr = np.array(im, dtype=np.uint8)
-    except IOError as (errno, strerror):
-        print "I/O error({0}): {1}".format(errno, strerror)
+    except IOError as error:
+        print ("I/O error({0}): {1}".format(error.errno, error.strerror))
     except:
-        print "Cannot open image."
+        print ("Cannot open image.")
     return imarr
 
 def asRowMatrix(X):
@@ -77,13 +77,13 @@ def zscore(X):
     return X, mean, std
 
 def shuffle(X,y):
-    idx = np.argsort([random.random() for i in xrange(y.shape[0])])
+    idx = np.argsort([random.random() for i in range(y.shape[0])])
     return X[:,idx], y[idx]
 
 def shuffle_array(X,y):
     """ Shuffles two arrays!
     """
-    idx = np.argsort([random.random() for i in xrange(len(y))])
+    idx = np.argsort([random.random() for i in range(len(y))])
     X = [X[i] for i in idx]
     y = [y[i] for i in idx]
     return (X, y)

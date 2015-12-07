@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2012, Philipp Wagner <bytefish[at]gmx[dot]de>.
+# Copyright (c) 2015, Joao Quintas
 # All rights reserved.
+#
+# Adapted from Philipp Wagner <bytefish[at]gmx[dot]de>.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,9 +34,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys, os
+
 sys.path.append("../..")
 # import facerec modules
-from facerec.feature import Fisherfaces, SpatialHistogram, Identity
+from facerec.feature import Fisherfaces, SpatialHistogram, Identity, PCA
 from facerec.distance import EuclideanDistance, ChiSquareDistance
 from facerec.classifier import NearestNeighbor
 from facerec.model import PredictableModel
@@ -55,6 +58,9 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from facerec.lbp import LPQ, ExtendedLBP
 
+# import for measure execution time of small code snippets (https://docs.python.org/3.4/library/timeit.html)
+import timeit
+
 
 def read_images(path, sz=None):
     """Reads the images in a given folder, resizes images on the fly if size is given.
@@ -70,7 +76,7 @@ def read_images(path, sz=None):
             y: The corresponding labels (the unique number of the subject, person) in a Python list.
     """
     c = 0
-    X,y = [], []
+    X, y = [], []
     for dirname, dirnames, filenames in os.walk(path):
         for subdirname in dirnames:
             subject_path = os.path.join(dirname, subdirname)
@@ -88,21 +94,36 @@ def read_images(path, sz=None):
                 except:
                     print ("Unexpected error:", sys.exc_info()[0])
                     raise
-            c = c+1
-    return [X,y]
+            c = c + 1
+    return [X, y]
+
 
 if __name__ == "__main__":
+    """
+        General structure of the algorithm follows:
+        1. read images
+            1.1. resize and reformat images if needed
+        2. obtain mean image
+        3. apply pca
+        4. obtain k largest for eigenvectors
+        5. obtain k largest eigenfaces
+        6. project new face in the eigenfaces space
+    """
+
     # This is where we write the images, if an output_dir is given
     # in command line:
     out_dir = None
+
     # You'll need at least a path to your image data, please see
     # the tutorial coming with this source code on how to prepare
     # your image data:
     if len(sys.argv) < 2:
-        print ("USAGE: facerec_demo.py </path/to/images>")
+        print ("USAGE: eigenfaces_nocontext.py </path/to/images>")
         sys.exit()
     # Now read in the image data. This must be a valid path!
-    [X,y] = read_images(sys.argv[1])
+    [X, y] = read_images(sys.argv[1])
+
+
     # Then set up a handler for logging:
     handler = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -111,27 +132,53 @@ if __name__ == "__main__":
     logger = logging.getLogger("facerec")
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
-    # Define the Fisherfaces as Feature Extraction method:
-    feature = Fisherfaces()
+
+
+
+
+
+    # Define the PCA as Feature Extraction method:
+    feature = PCA()
+
     # Define a 1-NN classifier with Euclidean Distance:
     classifier = NearestNeighbor(dist_metric=EuclideanDistance(), k=1)
+
     # Define the model as the combination
     my_model = PredictableModel(feature=feature, classifier=classifier)
-    # Compute the Fisherfaces on the given data (in X) and labels (in y):
-    my_model.compute(X, y)
+
+    # Compute the Eigenfaces on the given data (in X) and labels (in y):
+    t_train_model = timeit.timeit(stmt='my_model.compute(X, y)', setup='from __main__ import my_model, X, y', number=1)
+    print("\ncomputing model for {} images from {} individuals: {}s\n".format(len(X), len(set(y)) ,t_train_model))
+
     # We then save the model, which uses Pythons pickle module:
     save_model('model.pkl', my_model)
     model = load_model('model.pkl')
+
+
+
+
+
     # Then turn the first (at most) 16 eigenvectors into grayscale
     # images (note: eigenvectors are stored by column!)
     E = []
     for i in range(min(model.feature.eigenvectors.shape[1], 16)):
-        e = model.feature.eigenvectors[:,i].reshape(X[0].shape)
-        E.append(minmax_normalize(e,0,255, dtype=np.uint8))
-    # Plot them and store the plot to "python_fisherfaces_fisherfaces.pdf"
-    subplot(title="Fisherfaces", images=E, rows=4, cols=4, sptitle="Fisherface", colormap=cm.jet, filename="fisherfaces.png")
+        e = model.feature.eigenvectors[:, i].reshape(X[0].shape)
+        E.append(minmax_normalize(e, 0, 255, dtype=np.uint8))
+
+    # Plot them and store the plot to "eigenfaces.png"
+    subplot(title="Eigenfaces", images=E, rows=4, cols=4, sptitle="Eigenfaces", colormap=cm.gray,
+            filename="eigenfaces.png")
+
+
+
+
+
     # Perform a 10-fold cross validation
-    cv = KFoldCrossValidation(model, k=10)
-    cv.validate(X, y)
+    k=10
+    cv = KFoldCrossValidation(model, k)
+    t_validation = timeit.timeit(stmt='cv.validate(X, y)', setup='from __main__ import cv, X, y', number=1)
+    print("\nk-fold cross validation (k={}): {}s\n".format(k, t_validation))
+
     # And print the result:
+    print("\n\nResults:\n")
     cv.print_results()

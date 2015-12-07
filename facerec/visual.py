@@ -9,10 +9,18 @@ try:
     from PIL import Image
 except ImportError:
     import Image
+
 import math as math
 
 
+
 def create_font(fontname='Tahoma', fontsize=10):
+    """
+
+    :param fontname:
+    :param fontsize:
+    :return:
+    """
     return { 'fontname': fontname, 'fontsize':fontsize }
 
 def plot_gray(X,  sz=None, filename=None):
@@ -54,7 +62,7 @@ def subplot(title, images, rows, cols, sptitle="subplot", sptitles=[], colormap=
     fig = plt.figure()
     # main title
     fig.text(.5, .95, title, horizontalalignment='center') 
-    for i in xrange(len(images)):
+    for i in range(len(images)):
         ax0 = fig.add_subplot(rows,cols,(i+1))
         plt.setp(ax0.get_xticklabels(), visible=False)
         plt.setp(ax0.get_yticklabels(), visible=False)
