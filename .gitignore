@@ -6,3 +6,7 @@ serverlog.log
 
 # ignore Data Store files from mac os
 .DS_Store
+
+# ignore IntelliJ IDEA files
+*.iml
+.idea
