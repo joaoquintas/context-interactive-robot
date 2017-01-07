@@ -7,7 +7,7 @@ from matplotlib import pyplot
 import timeit
 
 # import for utility method to read images
-from utils import non_max_suppression_fast, read_images, parse_pascal
+from .utils import non_max_suppression_fast, read_images, parse_pascal
 
 
 class Detector:
@@ -427,10 +427,10 @@ if __name__ == "__main__":
 
 
         # print output row for image algorithms analysis
-        # print("\n{},{},{}|{:.4f},{},{},{},{},{:.2f},{:.2f},{:.2f}|{:.4f},{},{},{},{},{:.2f},{:.2f},{:.2f}".format(
-        #         imgIdx, imgName, n_persons,
-        #         t_haar, n_det_haar, hit_haar, error_haar, miss_haar,precision_haar, recall_haar, f_measure_haar,
-        #         t_hog, n_det_hog, hit_hog, error_hog, miss_hog, precision_hog, recall_hog, f_measure_hog))
+        print("\n{},{},{}|{:.4f},{},{},{},{},{:.2f},{:.2f},{:.2f}|{:.4f},{},{},{},{},{:.2f},{:.2f},{:.2f}".format(
+                imgIdx, imgName, n_persons,
+                t_haar, n_det_haar, hit_haar, error_haar, miss_haar,precision_haar, recall_haar, f_measure_haar,
+                t_hog, n_det_hog, hit_hog, error_hog, miss_hog, precision_hog, recall_hog, f_measure_hog))
 
 
 
@@ -441,7 +441,7 @@ if __name__ == "__main__":
         #
 
         # prepare file to write results to file
-        with open('results_haar_hog_prec_rec_f.csv', 'a', newline='') as f:
+        with open('results_haar_hog_prec_rec_f_2.csv', 'a', newline='') as f:
         	writer = csv.writer(f)
         	row = [imgIdx, imgName, n_persons,
                    t_haar, n_det_haar, hit_haar, error_haar, miss_haar,precision_haar, recall_haar, f_measure_haar,
